@@ -29,8 +29,8 @@ All values are hardcoded in `video_api_client.py`:
 # Get page 1 (default)
 python video_api_client.py get_posts
 
-# Get page 2, 20 items per page, search for a keyword, sort descending
-python video_api_client.py get_posts --page 2 --per-page 20 --search "关键词" --order DESC
+# Get page 2, 20 items per page, sort descending
+python video_api_client.py get_posts --page 2 --per-page 20 --order DESC
 ```
 
 **Python 代码调用:**
@@ -42,7 +42,7 @@ from video_api_client import get_posts
 result = get_posts()
 
 # Get with all parameters
-result = get_posts(page=1, per_page=20, search="关键词", order="DESC")
+result = get_posts(page=1, per_page=20, order="DESC")
 print(result)
 ```
 
@@ -51,7 +51,7 @@ print(result)
 ```bash
 curl -H 'accept: application/json' \
      -H 'X-API-KEY: ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56' \
-     'https://v.yuelk.com/pyvideo2/api/get_posts?page=1&per_page=20&search=关键词&sort_order=DESC'
+     'https://v.yuelk.com/pyvideo2/api/get_posts?page=1&per_page=20&sort_order=DESC'
 ```
 
 Parameters:
@@ -60,7 +60,6 @@ Parameters:
 |---|---|---|
 | `page` | int | Page number (default: 1) |
 | `per_page` | int | Items per page (optional) |
-| `search` | str | Search keyword, can be empty (optional) |
 | `order` | str | Sort order: `ASC` or `DESC` (optional) |
 
 ### 2. Batch Disable Videos (批量禁用视频)

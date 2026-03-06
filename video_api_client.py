@@ -10,7 +10,7 @@ Supports:
 调用方式 (How to Call):
 
   1. 获取视频列表 (Get video list):
-     python video_api_client.py get_posts --page 1 --per-page 20 --search "关键词" --order DESC
+     python video_api_client.py get_posts --page 1 --per-page 20 --order DESC
 
   2. 批量禁用视频 (Batch disable videos):
      python video_api_client.py batch_disable 100 200 300
@@ -21,7 +21,7 @@ Supports:
   作为库调用 (Use as a library):
      from video_api_client import get_posts, batch_disable_videos, generate_api_docs
 
-     posts = get_posts(page=1, per_page=20, search="关键词", order="DESC")
+     posts = get_posts(page=1, per_page=20, order="DESC")
      result = batch_disable_videos([100, 200, 300])
      generate_api_docs(output_path="api_docs")
 """
@@ -58,26 +58,25 @@ def _build_headers(accept="application/json", with_api_key=True):
     return headers
 
 
-def get_posts(page=1, per_page=None, search=None, order=None):
+def get_posts(page=1, per_page=None, order=None):
     """Get the video center post list.
 
     调用方式 (How to call):
         # 命令行 (CLI):
-        python video_api_client.py get_posts --page 1 --per-page 20 --search "关键词" --order DESC
+        python video_api_client.py get_posts --page 1 --per-page 20 --order DESC
 
         # Python 代码调用 (Python code):
         from video_api_client import get_posts
-        result = get_posts(page=1, per_page=20, search="关键词", order="DESC")
+        result = get_posts(page=1, per_page=20, order="DESC")
 
         # curl 调用 (curl):
         curl -H 'accept: application/json' \\
              -H 'X-API-KEY: ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56' \\
-             'https://v.yuelk.com/pyvideo2/api/get_posts?page=1&per_page=20&search=关键词&sort_order=DESC'
+             'https://v.yuelk.com/pyvideo2/api/get_posts?page=1&per_page=20&sort_order=DESC'
 
     Args:
         page: Page number (integer, >= 1). Defaults to 1.
         per_page: Number of items per page (integer, optional).
-        search: Search keyword (string, optional, can be empty).
         order: Sort order, either ``"ASC"`` or ``"DESC"`` (optional).
 
     Returns:
@@ -98,8 +97,6 @@ def get_posts(page=1, per_page=None, search=None, order=None):
         if not isinstance(per_page, int) or per_page < 1:
             raise ValueError("per_page must be a positive integer")
         params["per_page"] = str(per_page)
-    if search:
-        params["search"] = search
     if order:
         params["sort_order"] = order.upper()
 
@@ -268,7 +265,6 @@ def main():
     gp = subparsers.add_parser("get_posts", help="Get video center list")
     gp.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
     gp.add_argument("--per-page", type=int, default=None, help="Items per page")
-    gp.add_argument("--search", type=str, default=None, help="Search keyword")
     gp.add_argument("--order", type=str, default=None, choices=["ASC", "DESC", "asc", "desc"],
                      help="Sort order (ASC or DESC)")
 
@@ -287,7 +283,6 @@ def main():
         result = get_posts(
             page=args.page,
             per_page=args.per_page,
-            search=args.search,
             order=args.order,
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))

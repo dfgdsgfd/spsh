@@ -76,14 +76,13 @@ class TestGetPosts(unittest.TestCase):
         mock_resp.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_resp
 
-        result = video_api_client.get_posts(page=2, per_page=10, search="test", order="desc")
+        result = video_api_client.get_posts(page=2, per_page=10, order="desc")
         self.assertEqual(result, {"total": 5})
 
         call_args = mock_urlopen.call_args
         req = call_args[0][0]
         self.assertIn("page=2", req.full_url)
         self.assertIn("per_page=10", req.full_url)
-        self.assertIn("search=test", req.full_url)
         self.assertIn("sort_order=DESC", req.full_url)
 
     def test_order_case_insensitive(self):
@@ -217,7 +216,7 @@ class TestMain(unittest.TestCase):
     def test_main_get_posts(self, mock_gp):
         with patch("sys.argv", ["prog", "get_posts", "--page", "2"]):
             video_api_client.main()
-        mock_gp.assert_called_once_with(page=2, per_page=None, search=None, order=None)
+        mock_gp.assert_called_once_with(page=2, per_page=None, order=None)
 
     @patch("video_api_client.batch_disable_videos", return_value={"success": True})
     def test_main_batch_disable(self, mock_bd):
