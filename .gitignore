@@ -28,3 +28,6 @@ Thumbs.db
 
 # Generated docs
 api_docs/
+
+# Generated review page
+review.html

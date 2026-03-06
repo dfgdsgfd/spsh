@@ -230,6 +230,139 @@ class TestMain(unittest.TestCase):
             video_api_client.main()
         mock_gd.assert_called_once_with(output_path="/tmp/docs")
 
+    @patch("video_api_client.generate_review_html", return_value="/tmp/review.html")
+    def test_main_review(self, mock_rv):
+        with patch("sys.argv", ["prog", "review", "--output", "/tmp/review.html"]):
+            video_api_client.main()
+        mock_rv.assert_called_once_with(output_path="/tmp/review.html")
+
+    @patch("video_api_client.toggle_video_enable", return_value={"success": True})
+    def test_main_toggle_disable(self, mock_tg):
+        with patch("sys.argv", ["prog", "toggle", "100", "--disable"]):
+            video_api_client.main()
+        mock_tg.assert_called_once_with(post_id=100, enable=False)
+
+    @patch("video_api_client.toggle_video_enable", return_value={"success": True})
+    def test_main_toggle_enable(self, mock_tg):
+        with patch("sys.argv", ["prog", "toggle", "100", "--enable"]):
+            video_api_client.main()
+        mock_tg.assert_called_once_with(post_id=100, enable=True)
+
+
+class TestToggleVideoEnable(unittest.TestCase):
+    """Tests for toggle_video_enable function."""
+
+    def test_invalid_post_id_raises(self):
+        with self.assertRaises(ValueError):
+            video_api_client.toggle_video_enable(post_id=0, enable=True)
+        with self.assertRaises(ValueError):
+            video_api_client.toggle_video_enable(post_id=-1, enable=False)
+        with self.assertRaises(ValueError):
+            video_api_client.toggle_video_enable(post_id="abc", enable=True)
+
+    def test_invalid_enable_raises(self):
+        with self.assertRaises(ValueError):
+            video_api_client.toggle_video_enable(post_id=1, enable="yes")
+        with self.assertRaises(ValueError):
+            video_api_client.toggle_video_enable(post_id=1, enable=1)
+
+    @patch("video_api_client.urllib.request.urlopen")
+    def test_toggle_disable_sends_correct_request(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"success": True}).encode("utf-8")
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = mock_resp
+
+        result = video_api_client.toggle_video_enable(post_id=100, enable=False)
+        self.assertEqual(result, {"success": True})
+
+        call_args = mock_urlopen.call_args
+        req = call_args[0][0]
+        self.assertEqual(req.method, "POST")
+        self.assertIn("video-enable-toggle", req.full_url)
+        self.assertEqual(req.get_header("Content-type"), "application/json")
+
+        body = json.loads(req.data.decode("utf-8"))
+        self.assertEqual(body["post_id"], 100)
+        self.assertFalse(body["enable"])
+
+    @patch("video_api_client.urllib.request.urlopen")
+    def test_toggle_enable_sends_correct_request(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"success": True}).encode("utf-8")
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = mock_resp
+
+        result = video_api_client.toggle_video_enable(post_id=200, enable=True)
+        self.assertEqual(result, {"success": True})
+
+        body = json.loads(mock_urlopen.call_args[0][0].data.decode("utf-8"))
+        self.assertEqual(body["post_id"], 200)
+        self.assertTrue(body["enable"])
+
+
+class TestGenerateReviewHtml(unittest.TestCase):
+    """Tests for generate_review_html function."""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_generates_html_file(self):
+        output = os.path.join(self.test_dir, "review.html")
+        result = video_api_client.generate_review_html(output_path=output)
+        self.assertEqual(result, output)
+        self.assertTrue(os.path.isfile(output))
+
+    def test_html_contains_hls_js(self):
+        output = os.path.join(self.test_dir, "review.html")
+        video_api_client.generate_review_html(output_path=output)
+        with open(output, encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn("hls.js", html.lower())
+
+    def test_html_contains_hardcoded_config(self):
+        output = os.path.join(self.test_dir, "review.html")
+        video_api_client.generate_review_html(output_path=output)
+        with open(output, encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn("https://v.yuelk.com", html)
+        self.assertIn("ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56", html)
+
+    def test_html_contains_approve_reject_buttons(self):
+        output = os.path.join(self.test_dir, "review.html")
+        video_api_client.generate_review_html(output_path=output)
+        with open(output, encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn("通过", html)
+        self.assertIn("拒绝", html)
+        self.assertIn("btn-approve", html)
+        self.assertIn("btn-reject", html)
+
+    def test_html_uses_video_enable_toggle_endpoint(self):
+        output = os.path.join(self.test_dir, "review.html")
+        video_api_client.generate_review_html(output_path=output)
+        with open(output, encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn("video-enable-toggle", html)
+
+    def test_html_supports_m3u8(self):
+        output = os.path.join(self.test_dir, "review.html")
+        video_api_client.generate_review_html(output_path=output)
+        with open(output, encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn(".m3u8", html)
+        self.assertIn("Hls.isSupported", html)
+
+    def test_creates_parent_dirs(self):
+        output = os.path.join(self.test_dir, "sub", "dir", "review.html")
+        result = video_api_client.generate_review_html(output_path=output)
+        self.assertTrue(os.path.isfile(result))
+
 
 if __name__ == "__main__":
     unittest.main()

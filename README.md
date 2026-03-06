@@ -2,7 +2,8 @@
 
 A Python client for the **PyVideo 2.3** API. All configuration values are **hardcoded** in the
 source code — no environment variables needed. Supports fetching the video center list,
-batch-disabling videos, and auto-generating API documentation from the public OpenAPI specification.
+batch-disabling videos, toggling video enable/disable, auto-generating API documentation,
+and generating an HTML video review page with m3u8 playback support.
 
 ## Requirements
 
@@ -62,7 +63,46 @@ Parameters:
 | `per_page` | int | Items per page (optional) |
 | `order` | str | Sort order: `ASC` or `DESC` (optional) |
 
-### 2. Batch Disable Videos (批量禁用视频)
+### 2. Toggle Video Enable/Disable (切换视频启用/禁用)
+
+Uses the [`video-enable-toggle`](https://v.yuelk.com/2CBw2VMfDM4l6ZhoXqDrt9u4VCMRlEF1/docs#/admin/toggle_video_enable_endpoint_pyvideo2_api_admin_video_enable_toggle_post) endpoint.
+
+**CLI 命令行调用:**
+
+```bash
+# Disable a video
+python video_api_client.py toggle 100 --disable
+
+# Enable a video
+python video_api_client.py toggle 100 --enable
+```
+
+**Python 代码调用:**
+
+```python
+from video_api_client import toggle_video_enable
+
+# Disable video
+result = toggle_video_enable(post_id=100, enable=False)
+
+# Enable video
+result = toggle_video_enable(post_id=100, enable=True)
+print(result)
+```
+
+**curl 调用:**
+
+```bash
+# Disable video
+curl -X POST \
+     -H 'accept: application/json' \
+     -H 'Content-Type: application/json' \
+     -H 'X-API-KEY: ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56' \
+     -d '{"post_id": 100, "enable": false}' \
+     'https://v.yuelk.com/pyvideo2/api/admin/video-enable-toggle'
+```
+
+### 3. Batch Disable Videos (批量禁用视频)
 
 **CLI 命令行调用:**
 
@@ -90,7 +130,37 @@ curl -X POST \
      'https://v.yuelk.com/pyvideo2/api/admin/moderation/batch-disable'
 ```
 
-### 3. Auto-Generate API Documentation (自动生成API文档)
+### 4. Video Review HTML Page (视频审核页面)
+
+Generate a self-contained HTML page for reviewing videos with m3u8 playback support.
+The page displays each video with:
+- **左边「✅ 通过」按钮** — Approve: skip to next video, **no disable action**
+- **右边「❌ 拒绝」按钮** — Reject: call `video-enable-toggle` API to **disable** the video, then move to next
+
+**CLI 命令行调用:**
+
+```bash
+python video_api_client.py review --output review.html
+# Then open review.html in a browser
+```
+
+**Python 代码调用:**
+
+```python
+from video_api_client import generate_review_html
+
+html_path = generate_review_html(output_path="review.html")
+print(f"Open in browser: {html_path}")
+```
+
+Features:
+- **m3u8 playback** via HLS.js (also supports mp4 and other formats)
+- **通过 (Approve)**: no API call, just skip to next video
+- **拒绝 (Reject)**: calls `POST /pyvideo2/api/admin/video-enable-toggle` with `{"post_id": X, "enable": false}`
+- Pagination support for browsing through pages of videos
+- All config hardcoded (API key, base URL) — just open the HTML file
+
+### 5. Auto-Generate API Documentation (自动生成API文档)
 
 API documentation is publicly accessible **without authentication**.
 
