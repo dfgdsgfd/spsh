@@ -15,18 +15,14 @@ import video_api_client
 class TestBuildHeaders(unittest.TestCase):
     """Tests for _build_headers helper."""
 
-    @patch.object(video_api_client, "API_KEY", "test-key-123")
     def test_headers_with_api_key(self):
         headers = video_api_client._build_headers()
         self.assertEqual(headers["Accept"], "application/json")
-        self.assertEqual(headers["X-API-KEY"], "test-key-123")
+        self.assertEqual(
+            headers["X-API-KEY"],
+            "ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56",
+        )
 
-    @patch.object(video_api_client, "API_KEY", "")
-    def test_headers_without_api_key_when_empty(self):
-        headers = video_api_client._build_headers()
-        self.assertNotIn("X-API-KEY", headers)
-
-    @patch.object(video_api_client, "API_KEY", "some-key")
     def test_headers_skip_api_key_when_flag_false(self):
         headers = video_api_client._build_headers(with_api_key=False)
         self.assertNotIn("X-API-KEY", headers)

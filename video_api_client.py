@@ -6,6 +6,24 @@ Supports:
   1. Fetching video center list (get_posts)
   2. Batch disabling videos (batch_disable)
   3. Auto-generating API documentation from the OpenAPI spec
+
+调用方式 (How to Call):
+
+  1. 获取视频列表 (Get video list):
+     python video_api_client.py get_posts --page 1 --per-page 20 --search "关键词" --order DESC
+
+  2. 批量禁用视频 (Batch disable videos):
+     python video_api_client.py batch_disable 100 200 300
+
+  3. 自动生成API文档 (Auto-generate API docs):
+     python video_api_client.py generate_docs --output api_docs
+
+  作为库调用 (Use as a library):
+     from video_api_client import get_posts, batch_disable_videos, generate_api_docs
+
+     posts = get_posts(page=1, per_page=20, search="关键词", order="DESC")
+     result = batch_disable_videos([100, 200, 300])
+     generate_api_docs(output_path="api_docs")
 """
 
 import json
@@ -14,14 +32,14 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
-BASE_URL = os.getenv("VIDEO_API_BASE_URL", "https://v.yuelk.com")
-API_KEY = os.getenv("VIDEO_API_KEY", "")
+# ============================================================
+# 硬编码配置 (Hardcoded Configuration)
+# ============================================================
+BASE_URL = "https://v.yuelk.com"
+API_KEY = "ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56"
 
 # Public OpenAPI documentation endpoint (no authentication required)
-OPENAPI_JSON_URL = os.getenv(
-    "VIDEO_API_OPENAPI_URL",
-    f"{BASE_URL}/2CBw2VMfDM4l6ZhoXqDrt9u4VCMRlEF1/openapi.json",
-)
+OPENAPI_JSON_URL = "https://v.yuelk.com/2CBw2VMfDM4l6ZhoXqDrt9u4VCMRlEF1/openapi.json"
 
 
 def _build_headers(accept="application/json", with_api_key=True):
@@ -35,7 +53,7 @@ def _build_headers(accept="application/json", with_api_key=True):
         Dictionary of HTTP headers.
     """
     headers = {"Accept": accept}
-    if with_api_key and API_KEY:
+    if with_api_key:
         headers["X-API-KEY"] = API_KEY
     return headers
 
@@ -43,10 +61,23 @@ def _build_headers(accept="application/json", with_api_key=True):
 def get_posts(page=1, per_page=None, search=None, order=None):
     """Get the video center post list.
 
+    调用方式 (How to call):
+        # 命令行 (CLI):
+        python video_api_client.py get_posts --page 1 --per-page 20 --search "关键词" --order DESC
+
+        # Python 代码调用 (Python code):
+        from video_api_client import get_posts
+        result = get_posts(page=1, per_page=20, search="关键词", order="DESC")
+
+        # curl 调用 (curl):
+        curl -H 'accept: application/json' \\
+             -H 'X-API-KEY: ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56' \\
+             'https://v.yuelk.com/pyvideo2/api/get_posts?page=1&per_page=20&search=关键词&sort_order=DESC'
+
     Args:
         page: Page number (integer, >= 1). Defaults to 1.
         per_page: Number of items per page (integer, optional).
-        search: Search keyword (string, optional).
+        search: Search keyword (string, optional, can be empty).
         order: Sort order, either ``"ASC"`` or ``"DESC"`` (optional).
 
     Returns:
@@ -83,6 +114,22 @@ def get_posts(page=1, per_page=None, search=None, order=None):
 def batch_disable_videos(post_ids):
     """Batch disable videos by their post IDs.
 
+    调用方式 (How to call):
+        # 命令行 (CLI):
+        python video_api_client.py batch_disable 100 200 300
+
+        # Python 代码调用 (Python code):
+        from video_api_client import batch_disable_videos
+        result = batch_disable_videos([100, 200, 300])
+
+        # curl 调用 (curl):
+        curl -X POST \\
+             -H 'accept: application/json' \\
+             -H 'Content-Type: application/json' \\
+             -H 'X-API-KEY: ef13c2bdf8cd8550ed4c37c323a558c9985d6d928d39a3b53bed864460221d56' \\
+             -d '{"post_ids": [100, 200, 300]}' \\
+             'https://v.yuelk.com/pyvideo2/api/admin/moderation/batch-disable'
+
     Sends a POST request to the admin moderation batch-disable endpoint.
 
     Args:
@@ -115,8 +162,17 @@ def batch_disable_videos(post_ids):
 def generate_api_docs(output_path="api_docs"):
     """Fetch the OpenAPI specification and generate local API documentation.
 
+    调用方式 (How to call):
+        # 命令行 (CLI):
+        python video_api_client.py generate_docs --output api_docs
+
+        # Python 代码调用 (Python code):
+        from video_api_client import generate_api_docs
+        html_path = generate_api_docs(output_path="api_docs")
+
     The OpenAPI JSON endpoint is publicly accessible and does **not**
     require authentication.
+    API文档地址: https://v.yuelk.com/2CBw2VMfDM4l6ZhoXqDrt9u4VCMRlEF1/redoc
 
     Args:
         output_path: Directory where documentation files will be written.
