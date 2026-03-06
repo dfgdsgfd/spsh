@@ -64,7 +64,9 @@ def get_posts(page=1, per_page=None, search=None, order=None):
 
     params = {"page": str(page)}
     if per_page is not None:
-        params["per_page"] = str(int(per_page))
+        if not isinstance(per_page, int) or per_page < 1:
+            raise ValueError("per_page must be a positive integer")
+        params["per_page"] = str(per_page)
     if search:
         params["search"] = search
     if order:
@@ -153,7 +155,9 @@ def generate_api_docs(output_path="api_docs"):
 </head>
 <body>
     <redoc spec-url="openapi.json"></redoc>
-    <script src="https://cdn.jsdelivr.net/npm/redoc@2/bundles/redoc.standalone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@2.4.0/bundles/redoc.standalone.js"
+            integrity="sha256-FCWbfEOaKHMF75vN7Fzj1cPP5/wIBBMKe70xqiLNpHk="
+            crossorigin="anonymous"></script>
 </body>
 </html>
 """

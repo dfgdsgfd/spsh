@@ -49,6 +49,14 @@ class TestGetPosts(unittest.TestCase):
         with self.assertRaises(ValueError):
             video_api_client.get_posts(order="INVALID")
 
+    def test_invalid_per_page_raises(self):
+        with self.assertRaises(ValueError):
+            video_api_client.get_posts(per_page=0)
+        with self.assertRaises(ValueError):
+            video_api_client.get_posts(per_page=-5)
+        with self.assertRaises(ValueError):
+            video_api_client.get_posts(per_page="not_int")
+
     @patch("video_api_client.urllib.request.urlopen")
     def test_get_posts_default_params(self, mock_urlopen):
         mock_resp = MagicMock()
